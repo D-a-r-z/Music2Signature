@@ -1,0 +1,17 @@
+# Core dependencies
+PlexAPI>=4.15.0
+Pillow>=10.0.0
+requests>=2.31.0
+python-dotenv>=1.0.0
+Flask>=3.0.0
+
+# HTTP client
+httpx>=0.25.0
+
+# Utilities
+python-dateutil>=2.8.0
+colorthief>=0.2.1
+
+# Development (optional)
+black>=23.0.0
+flake8>=6.0.0
