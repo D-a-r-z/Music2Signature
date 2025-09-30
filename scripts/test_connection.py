@@ -10,7 +10,7 @@ from dotenv import load_dotenv
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from api.plex_client import create_plex_client
-from api.image_generator import ImageGenerator
+from api.svg_generator import SVGGenerator
 
 def test_plex_connection():
     """Prueba la conexión con Plex"""
@@ -57,18 +57,15 @@ def test_image_generation():
         'artist': 'Artista de Prueba',
         'album': 'Álbum de Prueba'
     }
-    generator = ImageGenerator()
+    svggen = SVGGenerator(400, 90, 'normal')
     try:
-        # Generar imagen con datos de prueba
-        image_buffer = generator.generate_now_playing_image(test_data)
-        # Guardar imagen localmente
-        with open('test_image.png', 'wb') as f:
-            image_buffer.seek(0)
-            f.write(image_buffer.read())
-        print("✅ Imagen generada exitosamente: test_image.png")
+        svg = svggen.generate_now_playing_svg(test_data)
+        with open('test_image.svg', 'w', encoding='utf-8') as f:
+            f.write(svg)
+        print("✅ SVG generado exitosamente: test_image.svg")
         return True
     except Exception as e:
-        print(f"❌ Error generando imagen: {e}")
+        print(f"❌ Error generando SVG: {e}")
         return False
 
 def main():
@@ -76,13 +73,15 @@ def main():
     print("🧪 Plex2Sign - Test de Conexiones\n")
     # Cargar variables de entorno
     load_dotenv()
-    # Verificar variables requeridas
-    required_vars = ['PLEX_URL', 'PLEX_TOKEN']
-    missing_vars = [var for var in required_vars if not os.getenv(var)]
-    if missing_vars:
-        print(f"❌ Faltan variables de entorno: {', '.join(missing_vars)}")
+    # Verificar solo el token
+    if not os.getenv('PLEX_TOKEN'):
+        print("❌ Falta la variable de entorno: PLEX_TOKEN")
         print("💡 Asegúrate de tener un archivo .env configurado")
         return False
+        # Agregar script de prueba para depurar la conexión y mostrar el token, URL y usuario detectados
+        print(f"Token usado: {os.getenv('PLEX_TOKEN')}")
+        print(f"URL detectada: {os.getenv('PLEX_URL')}")
+        print(f"Usuario propietario detectado: {os.getenv('PLEX_USER', 'Desconocido')}")
     success = True
     # Probar Plex
     success &= test_plex_connection()

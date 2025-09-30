@@ -9,13 +9,7 @@ from datetime import datetime, timedelta
 from dotenv import load_dotenv
 from flask import Flask, Response, request, jsonify
 from api.plex_client import create_plex_client
-from api.image_generator import ImageGenerator
 from api.svg_generator import SVGGenerator
-try:
-    import redis
-    REDIS_ENABLED = True
-except ImportError:
-    REDIS_ENABLED = False
 
 # Cargar variables de entorno
 load_dotenv()
@@ -30,21 +24,18 @@ logger = logging.getLogger(__name__)
 # Crear aplicación Flask
 app = Flask(__name__)
 
-
-# Configuración de Redis
-REDIS_URL = os.getenv('REDIS_URL', 'redis://localhost:6379/0')
+# Configuración de cache
 CACHE_DURATION = int(os.getenv('CACHE_DURATION', 60))
 
-if REDIS_ENABLED:
-    redis_client = redis.Redis.from_url(REDIS_URL)
-
-# Cache en memoria como fallback
+# Cache en memoria
 image_cache = {
     'last_update': None,
     'image_url': None,
     'session_data': None,
     'cache_duration': CACHE_DURATION
 }
+
+# Nota: PNGs eliminados - servimos sólo SVG
 
 
 @app.route('/')
@@ -104,35 +95,31 @@ def index():
         </div>
         
         <div class="card">
-            <h2>🎨 Formatos Disponibles</h2>
+            <h3>Diseños disponibles</h3>
             
-            <h3>SVG (Animado)</h3>
-            <div style="margin: 2px 0;">
-                <p style="margin: 2px 0;"><strong>Light SVG</strong> - Tema claro con ecualizador animado</p>
-                <img src="/api/now-playing-svg?theme=normal&height=90" alt="Light SVG" style="max-width: 400px;" />
-                <br><small><a href="/api/now-playing-svg?theme=normal&height=90">Ver enlace directo</a></small>
-            </div>
+                    <div style="margin: 2px 0;">
+                        <p style="margin: 2px 0;"><strong>Transparent Dark</strong> - Fondo blanco sólido con letras oscuras para fondos oscuros</p>
+                        <img src="/api/now-playing-svg?theme=transparent-dark&height=90" alt="Transparent Dark" style="max-width: 400px;" />
+                        <br><small><a href="/api/now-playing-svg?theme=transparent-dark&height=90">Ver enlace directo</a></small>
+                    </div>
+
+                    <div style="margin: 2px 0;">
+                        <p style="margin: 2px 0;"><strong>Transparent Light</strong> - Fondo oscuro sólido con letras blancas para fondos claros</p>
+                        <img src="/api/now-playing-svg?theme=transparent-light&height=90" alt="Transparent Light" style="max-width: 400px;" />
+                        <br><small><a href="/api/now-playing-svg?theme=transparent-light&height=90">Ver enlace directo</a></small>
+                    </div>
+
+                    <div style="margin: 2px 0;">
+                        <p style="margin: 2px 0;"><strong>Light</strong> - Tema claro con ecualizador animado</p>
+                        <img src="/api/now-playing-svg?theme=normal&height=90" alt="Light" style="max-width: 400px;" />
+                        <br><small><a href="/api/now-playing-svg?theme=normal&height=90">Ver enlace directo</a></small>
+                    </div>
             
-            <div style="margin: 2px 0;">
-                <p style="margin: 2px 0;"><strong>Dark SVG</strong> - Tema oscuro con ecualizador animado</p>
-                <img src="/api/now-playing-svg?theme=dark&height=90" alt="Dark SVG" style="max-width: 400px;" />
-                <br><small><a href="/api/now-playing-svg?theme=dark&height=90">Ver enlace directo</a></small>
-            </div>
-            
-            <h3>PNG (Estático)</h3>
-            <div style="margin: 2px 0;">
-                <p style="margin: 2px 0;"><strong>Light PNG</strong> - Tema claro con barras estáticas</p>
-                <img src="/api/now-playing-png?theme=normal" alt="Light PNG" style="max-width: 400px;" />
-                <br><small><a href="/api/now-playing-png?theme=normal">Ver enlace directo</a></small>
-            </div>
-            
-            <div style="margin: 2px 0;">
-                <p style="margin: 2px 0;"><strong>Dark PNG</strong> - Tema oscuro con barras estáticas</p>
-                <img src="/api/now-playing-png?theme=dark" alt="Dark PNG" style="max-width: 400px;" />
-                <br><small><a href="/api/now-playing-png?theme=dark">Ver enlace directo</a></small>
-            </div>
-            
-            <p style="margin-top: 20px;"><small>💡 Se irán agregando otros diseños según se vayan probando.</small></p>
+                <div style="margin: 2px 0;">
+                    <p style="margin: 2px 0;"><strong>Dark</strong> - Tema oscuro con ecualizador animado</p>
+                    <img src="/api/now-playing-svg?theme=dark&height=90" alt="Dark" style="max-width: 400px;" />
+                    <br><small><a href="/api/now-playing-svg?theme=dark&height=90">Ver enlace directo</a></small>
+                </div>
         </div>
         
         <script>
@@ -232,8 +219,8 @@ def api_now_playing():
         # Si no hay sesión activa, intentar usar historial
         if not session_data:
             offset = int(time.time() // 30) % 5
-            history_data = plex_client.get_recent_playback_history(allowed_user, limit=10, offset=offset)
-            logger.info(f"PNG: Historial obtenido: {history_data}")
+            history_data = plex_client.get_recent_playback_history(allowed_user, limit=25, offset=offset)
+            logger.info(f"Historial obtenido: {history_data}")
             if history_data:
                 logger.info("No hay sesión activa, usando historial de reproducciones")
                 session_data = history_data
@@ -241,50 +228,53 @@ def api_now_playing():
                 logger.info("No hay sesión activa, historial ni cache, generando imagen de 'sin actividad'")
                 session_data = None
 
-        # Clave de caché
+        # Clave de caché (solo para logging)
         cache_key = f"now_playing:{token}:{allowed_user}:{theme}:{width}:{height}"
         cached_image = None
-        if REDIS_ENABLED:
-            cached_image = redis_client.get(cache_key)
-        else:
-            if image_cache.get('image_url') and image_cache.get('last_update'):
-                elapsed = (datetime.now() - image_cache['last_update']).total_seconds()
-                if elapsed < CACHE_DURATION:
-                    cached_image = image_cache['image_url']
+
+        # Verificar cache en memoria
+        if image_cache.get('image_url') and image_cache.get('last_update'):
+            elapsed = (datetime.now() - image_cache['last_update']).total_seconds()
+            if elapsed < CACHE_DURATION:
+                cached_image = image_cache['image_url']
 
         if cached_image:
-            logger.info("Devolviendo imagen desde caché Redis/memoria")
-            return Response(cached_image, mimetype='image/png')
+            logger.info("Devolviendo imagen desde caché en memoria")
+            resp = Response(cached_image, mimetype='image/svg+xml')
+            # Evitar que los proxies/navegadores cacheen indefinidamente
+            resp.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
+            return resp
 
-        # Generar imagen y guardar en caché
-        image_generator = ImageGenerator(width, height, theme)
-        image_buffer = image_generator.generate_now_playing_image(session_data)
-        image_buffer.seek(0)
-        image_bytes = image_buffer.read()
-        if REDIS_ENABLED:
-            redis_client.setex(cache_key, CACHE_DURATION, image_bytes)
-        else:
-            image_cache['image_url'] = image_bytes
-            image_cache['last_update'] = datetime.now()
-        return Response(image_bytes, mimetype='image/png')
-        
+        # Ahora devolvemos SVG en lugar de PNG
+        svg_generator = SVGGenerator(width, height, theme)
+        try:
+            svg_content = svg_generator.generate_now_playing_svg(session_data)
+        except Exception as e:
+            logger.error(f"Error generando contenido SVG: {e}")
+            return generate_error_image(f"Error: {str(e)}")
+
+        # inject version/timestamp comment (no debe romper la ejecución si git falla)
+        try:
+            import subprocess
+            git_hash = subprocess.check_output(['git', 'rev-parse', '--short', 'HEAD']).decode().strip()
+        except Exception:
+            git_hash = 'unknown'
+
+        svg_content = svg_content.replace('<svg', f'<!-- version:{git_hash} ts:{int(time.time())} --><svg', 1)
+        resp = Response(svg_content, mimetype='image/svg+xml')
+        resp.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
+        resp.headers['X-SVG-Version'] = git_hash
+        return resp
     except Exception as e:
-        logger.error(f"Error generando imagen: {e}")
+        logger.error(f"Error en api_now_playing: {e}")
         return generate_error_image(f"Error: {str(e)}")
 
 
 def generate_error_image(message: str) -> Response:
     """Genera imagen de error"""
     try:
-        image_generator = ImageGenerator(400, 90, 'default')
-        error_data = {
-            'title': message,
-            'type': 'error',
-            'state': 'stopped'
-        }
-        image_buffer = image_generator.generate_now_playing_image(None)  # Imagen idle
-        image_buffer.seek(0)
-        return Response(image_buffer.read(), mimetype='image/png')
+        # Generar un SVG de error en lugar de PNG
+        return generate_error_svg(message)
     except Exception as e:
         logger.error(f"Error generando imagen de error: {e}")
         return Response("Error", mimetype='text/plain', status=500)
@@ -337,9 +327,8 @@ def api_now_playing_svg():
         
         # Si no hay sesión activa, intentar usar historial
         if not session_data:
-            import time
             offset = int(time.time() // 30) % 5  # Alternar entre 0-4 cada 30 segundos
-            history_data = plex_client.get_recent_playback_history(allowed_user, limit=10, offset=offset)
+            history_data = plex_client.get_recent_playback_history(allowed_user, limit=25, offset=offset)
             logger.info(f"Historial obtenido: {history_data}")
             if history_data:
                 logger.info("No hay sesión activa, usando historial de reproducciones para SVG")
@@ -348,13 +337,30 @@ def api_now_playing_svg():
                 logger.info("No hay sesión activa, historial ni cache, generando SVG de 'sin actividad'")
                 session_data = None
         
+        # Allow forcing fresh generation by passing refresh=true
+        force_refresh = request.args.get('refresh', 'false').lower() == 'true'
+
         # Generar SVG
         svg_generator = SVGGenerator(width, height, theme)
         svg_content = svg_generator.generate_now_playing_svg(session_data)
-        
+
         logger.info("SVG generado exitosamente")
-        return Response(svg_content, mimetype='image/svg+xml')
-        
+        try:
+            import subprocess
+            git_hash = subprocess.check_output(['git', 'rev-parse', '--short', 'HEAD']).decode().strip()
+        except Exception:
+            git_hash = 'unknown'
+        svg_content = svg_content.replace('<svg', f'<!-- version:{git_hash} ts:{int(time.time())} --><svg', 1)
+        resp = Response(svg_content, mimetype='image/svg+xml')
+        # Ensure clients and CDNs get fresh content when requested
+        if force_refresh:
+            resp.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
+        else:
+            # still recommend short caching for typical requests
+            resp.headers['Cache-Control'] = 'public, max-age=5, must-revalidate'
+        resp.headers['X-SVG-Version'] = git_hash
+        return resp
+
     except Exception as e:
         logger.error(f"Error generando SVG: {e}")
         return generate_error_svg(f"Error: {str(e)}")
@@ -383,9 +389,8 @@ def api_now_playing_png():
         
         # Si no hay sesión activa, intentar usar historial
         if not session_data:
-            import time
             offset = int(time.time() // 30) % 5  # Alternar entre 0-4 cada 30 segundos
-            history_data = plex_client.get_recent_playback_history(allowed_user, limit=10, offset=offset)
+            history_data = plex_client.get_recent_playback_history(allowed_user, limit=25, offset=offset)
             logger.info(f"PNG: Historial obtenido: {history_data}")
             if history_data:
                 logger.info("No hay sesión activa, usando historial de reproducciones para PNG")
@@ -393,44 +398,34 @@ def api_now_playing_png():
             else:
                 logger.info("No hay sesión activa, historial ni cache, generando PNG de 'sin actividad'")
                 session_data = None
-        # Generar imagen PNG
-        logger.info(f"Generando PNG con dimensiones: {width}x{height}")
-        image_generator = ImageGenerator(theme=theme, width=width, height=height)
-        image_buffer = image_generator.generate_now_playing_image(session_data)
-        image_bytes = image_buffer.getvalue()  # Convertir BytesIO a bytes
-        logger.info(f"PNG generado exitosamente - Tema: {theme}, Dimensiones: {width}x{height}, Tamaño: {len(image_bytes)} bytes")
-        return Response(
-            image_bytes,
-            mimetype='image/png',
-            headers={
-                'Cache-Control': 'no-cache, no-store, must-revalidate',
-                'Pragma': 'no-cache',
-                'Expires': '0'
-            }
-        )
-        
+        # Este endpoint ya no devuelve PNG; devolvemos SVG
+        svg_generator = SVGGenerator(width, height, theme)
+        svg_content = svg_generator.generate_now_playing_svg(session_data)
+        return Response(svg_content, mimetype='image/svg+xml')
     except Exception as e:
-        logger.error(f"Error generando PNG: {e}")
-        return "Error generando imagen PNG", 500
+        logger.error(f"Error generando PNG (ahora retorna SVG): {e}")
+        return generate_error_svg(f"Error: {str(e)}")
 
 
 @app.route('/api/cache/clear')
 def api_clear_cache():
     """Endpoint para limpiar el cache manualmente"""
-    if REDIS_ENABLED:
-        redis_client.flushdb()
-        logger.info("Cache de Redis limpiado")
-        return jsonify({'success': True, 'message': 'Cache Redis limpiado'})
-    else:
-        global image_cache
+    global image_cache
+    try:
         image_cache = {
             'last_update': None,
             'image_url': None,
             'session_data': None,
-            'cache_duration': image_cache['cache_duration']
+            'cache_duration': CACHE_DURATION
         }
         logger.info("Cache en memoria limpiado")
         return jsonify({'success': True, 'message': 'Cache en memoria limpiado'})
+    except Exception as e:
+        logger.exception("Error limpiando cache en memoria: %s", e)
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+
+# Nota: El endpoint para convertir SVG a PNG se eliminó. La aplicación sirve sólo SVG.
 
 
 if __name__ == '__main__':

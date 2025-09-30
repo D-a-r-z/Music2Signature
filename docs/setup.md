@@ -48,9 +48,9 @@ cp .env.example .env
 # Configuración del servidor Plex
 PLEX_URL=http://192.168.1.100:32400  # Cambia por tu IP/URL
 PLEX_TOKEN=tu-token-de-plex-aqui
-
+## 🖼️ Miniaturas y hosting (opcional)
 # Configuración de Imgur
-IMGUR_CLIENT_ID=tu-client-id-de-imgur
+Por defecto Music2Signature usa las miniaturas proporcionadas por tu Plex Media Server; no es necesario configurar Imgur. Si por alguna razón necesitas un hosting externo para miniaturas (por ejemplo para servirlas desde un CDN), puedes integrar un servicio externo, pero no es obligatorio.
 
 # Configuración opcional
 CACHE_DURATION=60
@@ -114,6 +114,7 @@ vercel --prod
 | `PORT` | Puerto para desarrollo local | 5000 |
 
 ### Temas disponibles
+- `transparent` - Fondo transparente para embeber sobre otras superficies
 - `default` - Tema clásico con fondo oscuro
 - `dark` - Tema GitHub dark
 - `compact` - Versión más compacta
@@ -132,29 +133,15 @@ vercel --prod
 
 ### La imagen no se actualiza
 - Usa `?refresh=true` para forzar actualización
-- Verifica el valor de `CACHE_DURATION`
-- Ve a `/api/cache/clear` para limpiar cache
-
-### Problemas de fuentes en la imagen
 - En algunos sistemas puede fallar la carga de fuentes
 - El sistema automáticamente usa fuentes por defecto como fallback
 
 ## 🔒 Seguridad
-
-- **Nunca** pongas credenciales en repositorios públicos
-- Usa variables de entorno para toda información sensible
 - El token de Plex da acceso completo a tu servidor
 - Considera usar un usuario dedicado con permisos limitados
 
-## 📱 Uso en GitHub
-
 Una vez desplegado, añade esto a tu `README.md` del perfil:
-
-```markdown
-![Music2Signature](https://tu-deployment.vercel.app/api/now-playing)
 ```
 
-### Con parámetros personalizados:
-```markdown
 ![Music2Signature](https://tu-deployment.vercel.app/api/now-playing?theme=dark&width=500)
 ```
