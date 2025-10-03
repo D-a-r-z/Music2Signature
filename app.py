@@ -98,13 +98,13 @@ def index():
             <h3>Diseños disponibles</h3>
             
                     <div style="margin: 2px 0;">
-                        <p style="margin: 2px 0;"><strong>Transparent Dark</strong> - Fondo transparente con letras oscuras para fondos oscuros</p>
+                        <p style="margin: 2px 0;"><strong>Transparent Dark</strong> - Fondo transparente con letras oscuras para fondos claros</p>
                         <img src="/api/now-playing-svg?theme=transparent-dark&height=90" alt="Transparent Dark" style="max-width: 400px;" />
                         <br><small><a href="/api/now-playing-svg?theme=transparent-dark&height=90">Ver enlace directo</a></small>
                     </div>
 
                     <div style="margin: 2px 0;">
-                        <p style="margin: 2px 0;"><strong>Transparent Light</strong> - Fondo transparente con letras blancas para fondos claros</p>
+                        <p style="margin: 2px 0;"><strong>Transparent Light</strong> - Fondo transparente con letras blancas para fondos oscuros</p>
                         <img src="/api/now-playing-svg?theme=transparent-light&height=90" alt="Transparent Light" style="max-width: 400px;" />
                         <br><small><a href="/api/now-playing-svg?theme=transparent-light&height=90">Ver enlace directo</a></small>
                     </div>

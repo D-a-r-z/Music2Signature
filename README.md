@@ -113,8 +113,8 @@ Añade esto a tu `README.md`:
 ### Temas disponibles
 - **`normal`**: Tema con fondo claro
 - **`dark`**: Tema con fondo oscuro
-- **`transparent-dark`**: Fondo transparente con letras oscuras (para fondos oscuros)
-- **`transparent-light`**: Fondo transparente con letras blancas (para fondos claros)
+- **`transparent-dark`**: Fondo transparente con letras oscuras (para fondos claros)
+- **`transparent-light`**: Fondo transparente con letras blancas (para fondos oscuros)
 - **`bars`**: Solo las barras animadas, sin texto
 
 ## ⚙️ Configuración Avanzada
