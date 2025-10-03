@@ -6,7 +6,7 @@ Music2Signature es una aplicación web que genera imágenes SVG animadas y estil
 
 > **Estado Actual**: Actualmente solo compatible con Plex Media Server. La integración con Spotify está planificada para futuras versiones cuando haya tiempo disponible.
 
-![Now Playing](https://music2-signature.vercel.app/api/now-playing-svg?theme=transparent-dark)
+![Now Playing](https://music2-signature.vercel.app/api/now-playing-svg?theme=transparent-light)
 
 ## 🚀 Despliegue Rápido
 
@@ -111,10 +111,10 @@ Añade esto a tu `README.md`:
 ```
 
 ### Temas disponibles
-- **`normal`**: Tema claro con fondo blanco
-- **`dark`**: Tema oscuro para fondos oscuros
-- **`transparent-dark`**: Fondo blanco sólido con letras oscuras (para superponer sobre fondos oscuros)
-- **`transparent-light`**: Fondo oscuro sólido con letras blancas (para superponer sobre fondos claros)
+- **`normal`**: Tema con fondo claro
+- **`dark`**: Tema con fondo oscuro
+- **`transparent-dark`**: Fondo transparente con letras oscuras (para fondos oscuros)
+- **`transparent-light`**: Fondo transparente con letras blancas (para fondos claros)
 - **`bars`**: Solo las barras animadas, sin texto
 
 ## ⚙️ Configuración Avanzada
