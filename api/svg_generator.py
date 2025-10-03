@@ -24,7 +24,7 @@ class SVGGenerator:
         if theme == 'dark':
             self.bg_color = '#161b22'
             self.text_color = '#f0f6fc'
-            self.subtext_color = '#b6c2d1'
+            self.subtext_color = '#8b949e'
         elif theme == 'transparent-dark':
             self.bg_color = 'transparent'
             self.text_color = '#0b1220'
