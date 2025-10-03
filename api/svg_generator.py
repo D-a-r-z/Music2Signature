@@ -1,6 +1,13 @@
 ﻿import base64
 import io
-import requests
+imp        elif theme == 'transparent-dark':
+            self.bg_color = 'transparent'
+            self.text_color = '#0b1220'
+            self.subtext_color = '#586273'
+        elif theme == 'transparent-light':
+            self.bg_color = 'transparent'
+            self.text_color = '#ffffff'
+            self.subtext_color = '#b6c2d1'ests
 from PIL import Image
 
 try:
@@ -26,11 +33,11 @@ class SVGGenerator:
             self.text_color = '#f0f6fc'
             self.subtext_color = '#b6c2d1'
         elif theme == 'transparent-dark':
-            self.bg_color = '#ffffff'
+            self.bg_color = 'transparent'
             self.text_color = '#0b1220'
             self.subtext_color = '#586273'
         elif theme == 'transparent-light':
-            self.bg_color = '#161b22'
+            self.bg_color = 'transparent'
             self.text_color = '#ffffff'
             self.subtext_color = '#b6c2d1'
         else:
