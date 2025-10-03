@@ -1,13 +1,6 @@
 ﻿import base64
 import io
-imp        elif theme == 'transparent-dark':
-            self.bg_color = 'transparent'
-            self.text_color = '#0b1220'
-            self.subtext_color = '#586273'
-        elif theme == 'transparent-light':
-            self.bg_color = 'transparent'
-            self.text_color = '#ffffff'
-            self.subtext_color = '#b6c2d1'ests
+import requests
 from PIL import Image
 
 try:
